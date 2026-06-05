@@ -1,0 +1,76 @@
+# TTC ADAS System Configuration
+# Tuned for high-speed scenarios (highway, racing, 80–200 km/h)
+
+camera:
+  source: 0                   # 0 = webcam, or path to video file e.g. "highway.mp4"
+  width: 1280
+  height: 720
+  fps_target: 30
+  focal_length_px: 700        # Calibrate: fx from camera intrinsics matrix
+  camera_height_m: 1.2        # Height of camera above road (meters)
+
+detection:
+  model: "yolov8s.pt"         # yolov8n (fastest) / yolov8s (balanced) / yolov8m (accurate)
+  confidence: 0.40
+  iou_threshold: 0.45
+  device: "cuda"              # "cuda" for GPU, "cpu" for fallback
+  img_size: 640
+  classes:                    # COCO classes to track
+    - 0   # person
+    - 1   # bicycle
+    - 2   # car
+    - 3   # motorcycle
+    - 5   # bus
+    - 7   # truck
+
+tracking:
+  max_age: 30                 # Frames to keep lost track alive
+  n_init: 2                   # Frames before track is confirmed
+  max_cosine_distance: 0.4
+  nn_budget: 100
+
+depth:
+  method: "bounding_box"      # "bounding_box" | "midas" | "stereo"
+  # For bounding_box method: uses known object heights for metric depth
+  # Known heights in meters (average real-world values)
+  object_heights:
+    car: 1.5
+    truck: 3.5
+    bus: 3.2
+    motorcycle: 1.1
+    bicycle: 1.0
+    person: 1.75
+  midas_model: "MiDaS_small"  # Used if method = "midas"
+
+ttc:
+  # Kalman filter on TTC to remove noise
+  kalman_process_noise: 0.01
+  kalman_measurement_noise: 0.1
+  # Velocity smoothing window (frames)
+  velocity_window: 5
+  # Minimum relative approach speed to compute TTC (m/s)
+  min_approach_speed: 0.5
+
+risk:
+  # Time thresholds in seconds
+  safe_threshold: 4.0         # TTC > 4s → SAFE (green)
+  warning_threshold: 2.0      # TTC 2–4s → WARNING (amber)
+  critical_threshold: 1.5     # TTC 1–2s → DANGER (red)
+  emergency_threshold: 0.8    # TTC < 0.8s → EMERGENCY (white flash)
+
+  # High-speed adjustment: at >120 km/h expand thresholds automatically
+  high_speed_multiplier: 1.4  # Multiply thresholds at highway speeds
+
+alerts:
+  audio: false                # Set true if you have speaker output
+  overlay: true
+  record_output: false        # Save annotated video
+  output_path: "output_ttc.mp4"
+
+display:
+  show_fps: true
+  show_tracks: true
+  show_depth: true
+  show_ttc_bar: true
+  hud_style: "racing"         # "racing" | "minimal"
+  trail_length: 20            # Track history dots

@@ -1,0 +1,4 @@
+focal_length_px: 63.333333333333336
+known_class: car
+known_dist_m: 1.0
+method: single_distance
